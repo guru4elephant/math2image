@@ -326,7 +326,11 @@ def format_text_with_line_limit(text, max_chars_per_line):
                     current_line += formula
                 
                 i = end_idx + 1  # 跳过整个公式
-                continue
+            else:
+                # 如果没有找到结束的$，就将$作为普通字符处理
+                current_line += text[i]
+                i += 1
+            continue
         
         # 普通字符处理
         current_line += text[i]
@@ -743,6 +747,9 @@ def main():
     if not latex_text:
         print("请提供LaTeX文本或文件路径")
         return
+    
+    # 添加调试输出：打印原始输入文本
+    print(f"DEBUG - 原始输入: '{latex_text}'")
     
     # 配置图像效果
     effects = {}
