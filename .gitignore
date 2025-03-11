@@ -45,6 +45,7 @@ static/images/*.png
 outputs/*.png
 *.png
 !examples/*.png
+!example_images/*.png
 
 # Backup directories
 backup/
