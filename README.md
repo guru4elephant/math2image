@@ -25,7 +25,7 @@
 设置每行最大字符数，自动换行，同时保持数学公式的完整性：
 
 ```bash
-python latex_to_image.py --input "这是一个设置了行宽的示例，展示文本如何自动换行。这是一段很长的文本，我们希望它能够按照指定的字符数自动换行，同时保持数学公式 $E = mc^2$ 的完整性。" --output example_images/line_width.png --font "Songti SC" --max-chars-per-line 20
+python latex_to_image.py -i "这是一个设置了行宽的示例，展示文本如何自动换行。这是一段很长的文本，我们希望它能够按照指定的字符数自动换行，同时保持数学公式 $E = mc^2$ 的完整性。" -o example_images/line_width.png --font "Songti SC" --max-chars-per-line 20
 ```
 
 ![行宽限制示例](example_images/line_width.png)
@@ -35,7 +35,7 @@ python latex_to_image.py --input "这是一个设置了行宽的示例，展示�
 模拟手写笔迹，使文本看起来像手写的：
 
 ```bash
-python latex_to_image.py --input "这是模拟手写效果的示例，可以看到文字有微妙的变化。数学公式 $f(x) = \int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$ 也保持清晰。" --output example_images/handwriting.png --font "Songti SC" --handwriting
+python latex_to_image.py -i "这是模拟手写效果的示例，可以看到文字有微妙的变化。数学公式 $f(x) = \int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$ 也保持清晰。" -o example_images/handwriting.png --font "Songti SC" --handwriting
 ```
 
 ![手写体效果](example_images/handwriting.png)
@@ -45,7 +45,7 @@ python latex_to_image.py --input "这是模拟手写效果的示例，可以看�
 添加纸张纹理，使文本看起来像写在真实的纸上：
 
 ```bash
-python latex_to_image.py --input "这是带有纸张纹理的示例，使文本看起来像写在真实的纸上。公式 $\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$ 显示在纹理背景上。" --output example_images/paper_texture.png --font "Songti SC" --add-texture
+python latex_to_image.py -i "这是带有纸张纹理的示例，使文本看起来像写在真实的纸上。公式 $\sum_{i=1}^{n} i = \frac{n(n+1)}{2}$ 显示在纹理背景上。" -o example_images/paper_texture.png --font "Songti SC" --add-texture
 ```
 
 ![纸张纹理效果](example_images/paper_texture.png)
@@ -55,7 +55,7 @@ python latex_to_image.py --input "这是带有纸张纹理的示例，使文本�
 渲染复杂的数学表达式和公式：
 
 ```bash
-python latex_to_image.py --input "复杂数学公式示例：$\begin{pmatrix} a & b \\ c & d \end{pmatrix} \begin{pmatrix} e \\ f \end{pmatrix} = \begin{pmatrix} ae + bf \\ ce + df \end{pmatrix}$ 和 $\int_0^{\infty} \frac{\sin(x)}{x} dx = \frac{\pi}{2}$" --output example_images/complex_math.png --font "Songti SC"
+python latex_to_image.py -i "复杂数学公式示例：$\begin{pmatrix} a & b \\ c & d \end{pmatrix} \begin{pmatrix} e \\ f \end{pmatrix} = \begin{pmatrix} ae + bf \\ ce + df \end{pmatrix}$ 和 $\int_0^{\infty} \frac{\sin(x)}{x} dx = \frac{\pi}{2}$" -o example_images/complex_math.png --font "Songti SC"
 ```
 
 ![复杂数学公式](example_images/complex_math.png)
@@ -65,7 +65,7 @@ python latex_to_image.py --input "复杂数学公式示例：$\begin{pmatrix} a 
 同时应用多种效果（手写风格和纸张纹理）：
 
 ```bash
-python latex_to_image.py --input "这是综合效果示例，同时应用手写风格和纸张纹理，使文本看起来像在真实纸上手写的。数学公式：$\lim_{n \to \infty} \left(1 + \frac{1}{n}\right)^n = e$" --output example_images/combined_effects.png --font "Songti SC" --handwriting --add-texture
+python latex_to_image.py -i "这是综合效果示例，同时应用手写风格和纸张纹理，使文本看起来像在真实纸上手写的。数学公式：$\lim_{n \to \infty} \left(1 + \frac{1}{n}\right)^n = e$" -o example_images/combined_effects.png --font "Songti SC" --handwriting --add-texture
 ```
 
 ![组合效果](example_images/combined_effects.png)
@@ -120,23 +120,23 @@ pip install -r requirements.txt
 #### 基本用法
 
 ```bash
-python latex_to_image.py --input "E = mc^2" --output formula.png
+python latex_to_image.py -i "E = mc^2" -o formula.png
 ```
 
 #### 高级特性
 
 ```bash
 # 使用手写体效果
-python latex_to_image.py --input "这是手写的公式 $E = mc^2$" --output handwriting.png --handwriting
+python latex_to_image.py -i "这是手写的公式 $E = mc^2$" -o handwriting.png --handwriting
 
 # 添加纸张纹理
-python latex_to_image.py --input "带纹理的文本" --output texture.png --add-texture
+python latex_to_image.py -i "带纹理的文本" -o texture.png --add-texture
 
 # 行宽限制（每行最多20个字符）
-python latex_to_image.py --input "这是一段很长的文本，我们希望它能够自动换行。" --output line_wrap.png --max-chars-per-line 20
+python latex_to_image.py -i "这是一段很长的文本，我们希望它能够自动换行。" -o line_wrap.png --max-chars-per-line 20
 
 # 组合多种效果
-python latex_to_image.py --input "组合多种效果的示例" --output combined.png --handwriting --add-texture --rotate-angle 1
+python latex_to_image.py -i "组合多种效果的示例" -o combined.png --handwriting --add-texture --rotate 1
 ```
 
 ### 批量处理
@@ -189,21 +189,29 @@ render_latex_to_image(
 
 | 参数 | 描述 | 默认值 |
 |------|------|--------|
-| `--input` | 输入的 LaTeX 文本或文件 | 必填 |
-| `--output` | 输出图片路径 | output.png |
-| `--dpi` | 输出图片的 DPI 分辨率 | 300 |
+| `--input`, `-i` | 输入的 LaTeX 文本或文件 | 必填 |
+| `--output`, `-o` | 输出图片路径 | output.png |
+| `--dpi`, `-d` | 输出图片的 DPI 分辨率 | 300 |
+| `--template`, `-t` | LaTeX模板文件路径 | 内置模板 |
+| `--no-trim` | 禁用自动裁剪空白区域 | False |
+| `--border` | 裁剪后保留的边距像素数 | 10 |
+| `--use-pdflatex` | 使用pdflatex而不是xelatex（不支持中文） | False |
+| `--list-fonts` | 列出系统中可用的中文字体 | False |
 | `--font` | 使用的字体 | PingFang SC |
 | `--random-font` | 随机选择字体 | False |
-| `--font-size` | 字体大小 | 自动 |
-| `--bg-color` | 背景颜色（如 white, #FFFFFF） | 白色 |
-| `--random-bg-color` | 随机背景颜色 | False |
+| `--font-size` | 字体大小（如11pt, 12pt等） | 自动 |
+| `--rotate` | 文本旋转角度（度） | 0 |
+| `--random-rotate` | 随机旋转文本（在-5到5度之间） | False |
+| `--bg-color` | 背景颜色（LaTeX颜色名称或rgb值） | 白色 |
+| `--random-bg` | 随机背景颜色 | False |
+| `--add-noise` | 添加噪点效果 | False |
+| `--add-blur` | 添加模糊效果 | False |
+| `--add-texture` | 添加纸张纹理 | False |
+| `--add-lighting` | 添加照明效果 | False |
+| `--no-effects` | 禁用所有特效 | False |
+| `--max-chars-per-line` | 每行最大字符数 | -1 (不限制) |
 | `--handwriting` | 启用手写体效果 | False |
 | `--handwriting-intensity` | 手写体效果强度 (0-1) | 0.5 |
-| `--add-texture` | 添加纸张纹理 | False |
-| `--texture-intensity` | 纹理强度 (0-1) | 0.1 |
-| `--rotate-angle` | 文本旋转角度 | 0 |
-| `--random-rotate` | 随机旋转文本 | False |
-| `--max-chars-per-line` | 每行最大字符数 | -1 (不限制) |
 
 ## 自定义模板
 
