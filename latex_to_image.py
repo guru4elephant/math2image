@@ -290,7 +290,7 @@ def add_random_effects(image, effects_config=None):
 
 def format_text_with_line_limit(text, max_chars_per_line):
     """
-    根据每行最大字符数对文本进行格式化，保持数学公式完整
+    根据每行最大字符数对文本进行格式化，保持数学公式完整，并确保英文单词不会被拆分
     
     Args:
         text: 原始文本
@@ -304,10 +304,13 @@ def format_text_with_line_limit(text, max_chars_per_line):
         
     print(f"原始文本: {text}")
     
-    # 使用更简单的方法：先按照普通文本分行，然后特殊处理数学公式
+    # 使用更智能的方法分行，特殊处理数学公式并保持英文单词完整
     lines = []
     current_line = ""
     i = 0
+    
+    # 英文单词分隔符
+    word_separators = " ,.;:!?-()[]{}\n\t"
     
     while i < len(text):
         # 检查是否是数学公式的开始
@@ -331,12 +334,45 @@ def format_text_with_line_limit(text, max_chars_per_line):
                 current_line += text[i]
                 i += 1
             continue
+            
+        # 处理英文单词：如果接下来是一个单词，需要检查是否能完全放入当前行
+        if i < len(text) and text[i] not in word_separators:
+            # 寻找单词结束位置
+            word_end = i
+            while word_end < len(text) and text[word_end] not in word_separators:
+                word_end += 1
+            
+            # 提取完整单词
+            word = text[i:word_end]
+            
+            # 判断单词是否需要换行
+            if len(current_line) + len(word) > max_chars_per_line:
+                # 如果当前行不为空且加上这个单词会超出限制，则换行
+                if current_line:
+                    lines.append(current_line)
+                    current_line = word
+                else:
+                    # 如果当前行为空，说明单词本身就很长，强制加入当前行
+                    current_line = word
+                
+            else:
+                # 单词可以直接加到当前行
+                current_line += word
+            
+            i = word_end  # 移动到单词结束位置
+            continue
         
-        # 普通字符处理
+        # 处理分隔符
         current_line += text[i]
-        if len(current_line) >= max_chars_per_line:
+        
+        # 如果当前字符是换行符或当前行长度达到限制，则换行
+        if text[i] == '\n' or len(current_line) >= max_chars_per_line:
             lines.append(current_line)
             current_line = ""
+            
+            # 如果是因为换行符换行，则移除这个换行符
+            if text[i] == '\n':
+                current_line = current_line[:-1]
         
         i += 1
     
