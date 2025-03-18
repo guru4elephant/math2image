@@ -302,85 +302,115 @@ def format_text_with_line_limit(text, max_chars_per_line):
     if max_chars_per_line <= 0:
         return text
         
+    # 调试信息
     print(f"原始文本: {text}")
     
-    # 使用更智能的方法分行，特殊处理数学公式并保持英文单词完整
-    lines = []
-    current_line = ""
+    # 分词处理：将文本分割为单词、空格和其他字符
+    # 首先保护数学表达式
+    math_expressions = []
+    protected_text = ""
     i = 0
     
-    # 英文单词分隔符
-    word_separators = " ,.;:!?-()[]{}\n\t"
-    
     while i < len(text):
-        # 检查是否是数学公式的开始
+        # 处理数学公式
         if text[i:i+1] == '$':
-            # 查找结束的$
             end_idx = text.find('$', i+1)
             if end_idx != -1:
-                # 找到了完整的数学公式
                 formula = text[i:end_idx+1]
-                
-                # 如果当前行加上公式会超过限制，先换行
-                if len(current_line) + len(formula) > max_chars_per_line and current_line:
-                    lines.append(current_line)
-                    current_line = formula
-                else:
-                    current_line += formula
-                
-                i = end_idx + 1  # 跳过整个公式
+                placeholder = f"__MATH_{len(math_expressions)}__"
+                math_expressions.append(formula)
+                protected_text += placeholder
+                i = end_idx + 1
             else:
-                # 如果没有找到结束的$，就将$作为普通字符处理
-                current_line += text[i]
+                protected_text += text[i]
                 i += 1
-            continue
+        else:
+            protected_text += text[i]
+            i += 1
+    
+    # 标记文本：将文本分割为单词、空格和标点符号
+    # 使用正则表达式分割文本，保持标点符号和空格
+    import re
+    
+    # 这个正则表达式会分割文本，保留单词、数学表达式占位符、标点符号和空格
+    tokens = re.findall(r'(__MATH_\d+__|\w+|[.,;:!?]|\s+|.)', protected_text)
+    
+    # 按行重组文本
+    lines = []
+    current_line = ""
+    
+    for token in tokens:
+        # 如果是数学表达式占位符，检查是否需要换行
+        if token.startswith("__MATH_"):
+            math_idx = int(token.replace("__MATH_", "").replace("__", ""))
+            formula = math_expressions[math_idx]
             
-        # 处理英文单词：如果接下来是一个单词，需要检查是否能完全放入当前行
-        if i < len(text) and text[i] not in word_separators:
-            # 寻找单词结束位置
-            word_end = i
-            while word_end < len(text) and text[word_end] not in word_separators:
-                word_end += 1
-            
-            # 提取完整单词
-            word = text[i:word_end]
-            
-            # 判断单词是否需要换行
-            if len(current_line) + len(word) > max_chars_per_line:
-                # 如果当前行不为空且加上这个单词会超出限制，则换行
-                if current_line:
-                    lines.append(current_line)
-                    current_line = word
-                else:
-                    # 如果当前行为空，说明单词本身就很长，强制加入当前行
-                    current_line = word
-                
+            # 如果当前行加上公式会超过行宽，则先换行
+            if len(current_line) + len(formula) > max_chars_per_line and current_line:
+                lines.append(current_line.rstrip())
+                current_line = formula + " "
             else:
-                # 单词可以直接加到当前行
-                current_line += word
-            
-            i = word_end  # 移动到单词结束位置
+                current_line += formula + " "
+        
+        # 如果是换行符，直接换行
+        elif token == '\n':
+            lines.append(current_line.rstrip())
+            current_line = ""
+        
+        # 如果是空格，且当前行为空，则跳过
+        elif token.isspace() and not current_line:
             continue
         
-        # 处理分隔符
-        current_line += text[i]
+        # 如果是单词，检查是否需要换行
+        elif re.match(r'\w+', token):
+            # 如果当前行加上单词会超过行宽，则先换行
+            if len(current_line) + len(token) > max_chars_per_line:
+                # 当前行不为空，先完成当前行
+                if current_line:
+                    lines.append(current_line.rstrip())
+                    current_line = token + " "
+                else:
+                    # 如果当前行为空但单词依然超长，将单词直接添加到新行
+                    # 即使可能超过行宽限制，我们也不拆分单词
+                    current_line = token + " "
+            else:
+                current_line += token + " "
         
-        # 如果当前字符是换行符或当前行长度达到限制，则换行
-        if text[i] == '\n' or len(current_line) >= max_chars_per_line:
-            lines.append(current_line)
-            current_line = ""
-            
-            # 如果是因为换行符换行，则移除这个换行符
-            if text[i] == '\n':
-                current_line = current_line[:-1]
+        # 处理标点符号
+        elif re.match(r'[.,;:!?]', token):
+            # 标点符号尽量不要放在行首
+            if not current_line and lines:
+                lines[-1] += token
+            else:
+                current_line += token
         
-        i += 1
+        # 其他字符
+        else:
+            # 如果添加字符会导致超过行宽，先换行
+            if len(current_line) + len(token) > max_chars_per_line:
+                lines.append(current_line.rstrip())
+                current_line = token
+            else:
+                current_line += token
     
     # 添加最后一行
     if current_line:
-        lines.append(current_line)
+        lines.append(current_line.rstrip())
     
-    formatted_text = '\n'.join(lines)
+    # 后处理：恢复数学表达式，确保行的整洁
+    result_lines = []
+    for line in lines:
+        # 恢复数学表达式
+        for i, formula in enumerate(math_expressions):
+            line = line.replace(f"__MATH_{i}__", formula)
+        
+        # 去除行首行尾空格
+        line = line.strip()
+        if line:
+            result_lines.append(line)
+    
+    # 生成最终格式化文本
+    formatted_text = '\n'.join(result_lines)
     print(f"格式化后的文本:\n{formatted_text}")
     return formatted_text
 
