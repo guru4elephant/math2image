@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LaTeX 公式转图片</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+            margin-top: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-family: monospace;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .result img {
+            max-width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px;
+            background-color: #f9f9f9;
+        }
+        .download-link {
+            display: block;
+            margin-top: 10px;
+            color: #4CAF50;
+            text-decoration: none;
+        }
+        .download-link:hover {
+            text-decoration: underline;
+        }
+        .examples {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        .example-item {
+            cursor: pointer;
+            color: #4CAF50;
+            margin-bottom: 5px;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .loading {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .options-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .option-group {
+            flex: 1;
+            min-width: 250px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .option-item {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .color-preview {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-left: 5px;
+            border: 1px solid #ddd;
+            vertical-align: middle;
+        }
+        .toggle-options {
+            background-color: #f0f0f0;
+            color: #333;
+            padding: 8px 15px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            text-align: center;
+            border-radius: 4px;
+        }
+        .advanced-options {
+            margin-top: 15px;
+            display: none;
+        }
+        .chinese-example {
+            margin-top: 10px;
+            border-top: 1px dashed #ddd;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>LaTeX 公式转图片工具</h1>
+    
+    <div>
+        <p>输入LaTeX格式的公式或文本：</p>
+        <textarea id="latex-input" placeholder="例如：$E = mc^2$">Two years ago Pete was three times as old as Claire. Four years before that, Pete was four times as old as Claire. In how many years will the ratio of their ages be $\frac{5}{2} : \frac{5}{3}$?</textarea>
+    </div>
+    
+    <div class="toggle-options" id="toggle-basic">基本选项 ▼</div>
+    <div class="advanced-options" id="basic-options">
+        <div class="options-container">
+            <div class="option-group">
+                <h3>文本设置</h3>
+                <div class="option-item">
+                    <label for="font-select">字体选择：</label>
+                    <select id="font-select" name="font">
+                        {% for font in available_fonts %}
+                        <option value="{{ font }}" {% if font == "PingFang SC" %}selected{% endif %}>{{ font }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="option-item">
+                    <label for="font-size">字体大小：</label>
+                    <select id="font-size" name="font_size">
+                        <option value="">默认</option>
+                        <option value="10pt">小 (10pt)</option>
+                        <option value="11pt">正常 (11pt)</option>
+                        <option value="12pt">大 (12pt)</option>
+                        <option value="14pt">特大 (14pt)</option>
+                    </select>
+                </div>
+                <div class="option-item">
+                    <label for="max-chars">每行最大字符数：</label>
+                    <input type="number" id="max-chars" name="max_chars_per_line" value="-1" min="-1" max="100">
+                    <small style="display: block; color: #666;">-1表示不限制，文本在一行显示</small>
+                </div>
+                <div class="option-item">
+                    <input type="checkbox" id="random-font" name="random_font">
+                    <label for="random-font" style="display: inline">随机字体</label>
+                </div>
+            </div>
+            
+            <div class="option-group">
+                <h3>图像设置</h3>
+                <div class="option-item">
+                    <label for="dpi">图像DPI：</label>
+                    <input type="number" id="dpi" name="dpi" value="300" min="72" max="600">
+                </div>
+                <div class="option-item">
+                    <label for="border">边距（像素）：</label>
+                    <input type="number" id="border" name="border" value="10" min="0" max="50">
+                </div>
+                <div class="option-item">
+                    <input type="checkbox" id="auto-trim" name="auto_trim" checked>
+                    <label for="auto-trim" style="display: inline">自动裁剪</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="toggle-options" id="toggle-advanced">高级选项 ▼</div>
+    <div class="advanced-options" id="advanced-options">
+        <div class="options-container">
+            <div class="option-group">
+                <h3>文本样式</h3>
+                <div class="option-item">
+                    <input type="checkbox" id="handwriting" name="handwriting">
+                    <label for="handwriting" style="display: inline">手写体效果</label>
+                    <input type="range" id="handwriting-intensity" name="handwriting_intensity" min="0.1" max="1.0" step="0.1" value="0.5" style="width: 100%">
+                    <small style="display: block; color: #666;">将文本转换为类似手写的样式（搭配楷体或行楷效果最佳）</small>
+                </div>
+                <div class="option-item">
+                    <label for="rotate">文字旋转角度：</label>
+                    <input type="number" id="rotate" name="rotate" value="0" min="-30" max="30" step="0.5">
+                </div>
+                <div class="option-item">
+                    <input type="checkbox" id="random-rotate" name="random_rotate">
+                    <label for="random-rotate" style="display: inline">随机旋转 (-5° ~ 5°)</label>
+                </div>
+                <div class="option-item">
+                    <label for="bg-color">背景颜色：</label>
+                    <input type="text" id="bg-color" name="bg_color" value="white">
+                    <span class="color-preview" id="color-preview" style="background-color: white;"></span>
+                </div>
+                <div class="option-item">
+                    <input type="checkbox" id="random-bg" name="random_bg">
+                    <label for="random-bg" style="display: inline">随机背景色</label>
+                </div>
+            </div>
+            
+            <div class="option-group">
+                <h3>图像效果</h3>
+                <div class="option-item">
+                    <input type="checkbox" id="add-noise" name="add_noise">
+                    <label for="add-noise" style="display: inline">添加噪点</label>
+                    <input type="range" id="noise-intensity" name="noise_intensity" min="0.01" max="0.2" step="0.01" value="0.05" style="width: 100%">
+                </div>
+                <div class="option-item">
+                    <input type="checkbox" id="add-blur" name="add_blur">
+                    <label for="add-blur" style="display: inline">添加模糊</label>
+                    <input type="range" id="blur-radius" name="blur_radius" min="0.1" max="2" step="0.1" value="0.5" style="width: 100%">
+                </div>
+                <div class="option-item">
+                    <input type="checkbox" id="add-texture" name="add_texture">
+                    <label for="add-texture" style="display: inline">纸张纹理</label>
+                    <input type="range" id="texture-intensity" name="texture_intensity" min="0.05" max="0.3" step="0.05" value="0.1" style="width: 100%">
+                </div>
+                <div class="option-item">
+                    <input type="checkbox" id="add-lighting" name="add_lighting">
+                    <label for="add-lighting" style="display: inline">照明效果</label>
+                    <input type="range" id="lighting-intensity" name="lighting_intensity" min="0.05" max="0.3" step="0.05" value="0.1" style="width: 100%">
+                </div>
+                <div class="option-item">
+                    <input type="checkbox" id="no-effects" name="no_effects">
+                    <label for="no-effects" style="display: inline">禁用所有效果</label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <button id="render-button">渲染成图片</button>
+    </div>
+    
+    <div id="loading" class="loading" style="display: none;">
+        <p>正在渲染中，请稍候...</p>
+    </div>
+    
+    <div id="error" class="error" style="display: none;"></div>
+    
+    <div id="result" class="result" style="display: none;">
+        <h3>渲染结果：</h3>
+        <img id="result-image">
+        <a id="download-link" class="download-link" download>下载图片</a>
+    </div>
+    
+    <div class="examples">
+        <h3>示例：</h3>
+        <div class="example-item" onclick="useExample(1)">例1: 简单的数学等式 $E = mc^2$</div>
+        <div class="example-item" onclick="useExample(2)">例2: 复杂的数学公式 $\int_{a}^{b} f(x) \, dx = F(b) - F(a)$</div>
+        <div class="example-item" onclick="useExample(3)">例3: 矩阵 $\begin{pmatrix} a & b \\ c & d \end{pmatrix}$</div>
+        <div class="example-item" onclick="useExample(4)">例4: 分段函数 $f(x) = \begin{cases} x^2, & \text{if } x > 0 \\ 0, & \text{if } x = 0 \\ -x^2, & \text{if } x < 0 \end{cases}$</div>
+        
+        <div class="chinese-example">
+            <div class="example-item" onclick="useExample(5)">例5: 中文测试 这是中文测试。数学公式：$E = mc^2$</div>
+            <div class="example-item" onclick="useExample(6)">例6: 中文题目 小明和小红分别有25个和30个苹果，小明送给小红$\frac{1}{5}$的苹果，小红送给小明$\frac{1}{6}$的苹果，请问最后谁的苹果多？</div>
+        </div>
+    </div>
+    
+    <script>
+        // 获取DOM元素
+        const renderButton = document.getElementById('render-button');
+        const latexInput = document.getElementById('latex-input');
+        const resultDiv = document.getElementById('result');
+        const resultImage = document.getElementById('result-image');
+        const downloadLink = document.getElementById('download-link');
+        const errorDiv = document.getElementById('error');
+        const loadingDiv = document.getElementById('loading');
+        const bgColorInput = document.getElementById('bg-color');
+        const colorPreview = document.getElementById('color-preview');
+        const toggleBasic = document.getElementById('toggle-basic');
+        const toggleAdvanced = document.getElementById('toggle-advanced');
+        const basicOptions = document.getElementById('basic-options');
+        const advancedOptions = document.getElementById('advanced-options');
+        const noEffectsCheck = document.getElementById('no-effects');
+        
+        // 展开/收起选项
+        toggleBasic.addEventListener('click', function() {
+            const isHidden = basicOptions.style.display === 'none' || basicOptions.style.display === '';
+            basicOptions.style.display = isHidden ? 'block' : 'none';
+            toggleBasic.textContent = isHidden ? '基本选项 ▲' : '基本选项 ▼';
+        });
+        
+        toggleAdvanced.addEventListener('click', function() {
+            const isHidden = advancedOptions.style.display === 'none' || advancedOptions.style.display === '';
+            advancedOptions.style.display = isHidden ? 'block' : 'none';
+            toggleAdvanced.textContent = isHidden ? '高级选项 ▲' : '高级选项 ▼';
+        });
+        
+        // 背景颜色预览
+        bgColorInput.addEventListener('input', function() {
+            colorPreview.style.backgroundColor = this.value;
+        });
+        
+        // 手写体选项交互
+        const handwritingCheckbox = document.getElementById('handwriting');
+        const handwritingIntensity = document.getElementById('handwriting-intensity');
+        const fontSelect = document.getElementById('font-select');
+        
+        handwritingCheckbox.addEventListener('change', function() {
+            handwritingIntensity.disabled = !this.checked;
+            
+            // 如果启用手写体，建议使用楷体或行楷字体
+            if (this.checked) {
+                // 尝试找到并选择楷体或行楷字体
+                const fonts = Array.from(fontSelect.options).map(opt => opt.value);
+                const handwritingFonts = ["Xingkai SC", "Kaiti SC", "STKaiti"];
+                
+                for (const font of handwritingFonts) {
+                    if (fonts.includes(font)) {
+                        fontSelect.value = font;
+                        break;
+                    }
+                }
+            }
+        });
+        
+        // 初始状态设置
+        handwritingIntensity.disabled = !handwritingCheckbox.checked;
+        
+        // 禁用特效复选框
+        noEffectsCheck.addEventListener('change', function() {
+            const effectOptions = document.querySelectorAll('#add-noise, #add-blur, #add-texture, #add-lighting, #noise-intensity, #blur-radius, #texture-intensity, #lighting-intensity');
+            effectOptions.forEach(option => {
+                option.disabled = noEffectsCheck.checked;
+            });
+        });
+        
+        // 渲染LaTeX
+        renderButton.addEventListener('click', renderLatex);
+        
+        function renderLatex() {
+            const latex = latexInput.value.trim();
+            
+            if (!latex) {
+                showError('请输入LaTeX内容');
+                return;
+            }
+            
+            // 收集所有输入参数
+            const formData = new FormData();
+            formData.append('latex', latex);
+            
+            // 基本选项
+            formData.append('font', document.getElementById('font-select').value);
+            formData.append('dpi', document.getElementById('dpi').value);
+            formData.append('auto_trim', document.getElementById('auto-trim').checked);
+            formData.append('border', document.getElementById('border').value);
+            formData.append('font_size', document.getElementById('font-size').value);
+            formData.append('random_font', document.getElementById('random-font').checked);
+            formData.append('max_chars_per_line', document.getElementById('max-chars').value);
+            
+            // 高级选项
+            formData.append('rotate', document.getElementById('rotate').value);
+            formData.append('random_rotate', document.getElementById('random-rotate').checked);
+            formData.append('bg_color', document.getElementById('bg-color').value);
+            formData.append('random_bg', document.getElementById('random-bg').checked);
+            
+            // 手写体选项
+            formData.append('handwriting', document.getElementById('handwriting').checked);
+            formData.append('handwriting_intensity', document.getElementById('handwriting-intensity').value);
+            
+            // 特效选项
+            formData.append('add_noise', document.getElementById('add-noise').checked);
+            formData.append('add_blur', document.getElementById('add-blur').checked);
+            formData.append('add_texture', document.getElementById('add-texture').checked);
+            formData.append('add_lighting', document.getElementById('add-lighting').checked);
+            formData.append('no_effects', document.getElementById('no-effects').checked);
+            
+            // 特效强度
+            formData.append('noise_intensity', document.getElementById('noise-intensity').value);
+            formData.append('blur_radius', document.getElementById('blur-radius').value);
+            formData.append('texture_intensity', document.getElementById('texture-intensity').value);
+            formData.append('lighting_intensity', document.getElementById('lighting-intensity').value);
+            
+            // 显示加载中
+            loadingDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+            
+            fetch('/render', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                loadingDiv.style.display = 'none';
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+                
+                resultImage.src = data.image_url;
+                downloadLink.href = data.image_url;
+                downloadLink.download = data.image_url.split('/').pop();
+                
+                resultDiv.style.display = 'block';
+            })
+            .catch(error => {
+                loadingDiv.style.display = 'none';
+                showError('渲染失败: ' + error.message);
+            });
+        }
+        
+        function showError(message) {
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+        
+        function useExample(exampleNumber) {
+            switch(exampleNumber) {
+                case 1:
+                    latexInput.value = '$E = mc^2$';
+                    break;
+                case 2:
+                    latexInput.value = '$\int_{a}^{b} f(x) \, dx = F(b) - F(a)$';
+                    break;
+                case 3:
+                    latexInput.value = '$\begin{pmatrix} a & b \\ c & d \end{pmatrix}$';
+                    break;
+                case 4:
+                    latexInput.value = '$f(x) = \begin{cases} x^2, & \text{if } x > 0 \\ 0, & \text{if } x = 0 \\ -x^2, & \text{if } x < 0 \end{cases}$';
+                    break;
+                case 5:
+                    latexInput.value = '这是中文测试。数学公式：$E = mc^2$。可以同时支持中文和公式。';
+                    break;
+                case 6:
+                    latexInput.value = '小明和小红分别有25个和30个苹果，小明送给小红$\\frac{1}{5}$的苹果，小红送给小明$\\frac{1}{6}$的苹果，请问最后谁的苹果多？';
+                    break;
+            }
+        }
+        
+        // 页面加载时展开基本选项
+        window.onload = function() {
+            toggleBasic.click();
+        }
+    </script>
+</body>
+</html>

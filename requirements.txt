@@ -1,0 +1,10 @@
+# 基本依赖
+Pillow>=9.0.0
+pdf2image>=1.16.0
+poppler-utils>=0.1.0
+
+# Web界面
+flask>=2.0.0
+
+# 进度条（可选）
+tqdm>=4.62.0 
